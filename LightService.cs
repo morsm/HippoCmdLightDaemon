@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Web.Http;
 using System.Net.Http.Formatting;
 using System.Threading.Tasks;
@@ -8,7 +10,7 @@ using Makaretu.Dns;
 using Microsoft.Owin.Hosting;
 using Owin;
 
-namespace Termors.Services.HippoPiPwmLedDaemon
+namespace Termors.Services.HippoCmdLightDaemon
 {
     public delegate Task LampSwitchedDelegate(LightService service, bool on);
 
@@ -17,16 +19,17 @@ namespace Termors.Services.HippoPiPwmLedDaemon
         private readonly ushort _port;
         private IDisposable _webapp = null;
         private bool _on;
-        private readonly byte _redChannel;
+        private readonly ConfigObject _config;
 
-        public LightService(string name, ushort port, byte redChannel)
+        public static string ShellName { get; set; }
+
+        public LightService(ConfigObject obj)
         {
-            Name = name;
-            _port = port;
-            _redChannel = redChannel;
+            Name = obj.Name;
+            _port = obj.Port;
+            _config = obj;
         }
 
-        public event LampSwitchedDelegate LampSwitched;
         public static readonly IDictionary<ushort, LightService> Registry = new Dictionary<ushort, LightService>();
 
         protected static readonly ServiceDiscovery Discovery = new ServiceDiscovery();
@@ -46,30 +49,11 @@ namespace Termors.Services.HippoPiPwmLedDaemon
             Registry[_port] = this;
         }
 
-        public async Task SetRGB(byte red, byte green, byte blue)
-        {
-            Red = red;
-            Green = green;
-            Blue = blue;
-
-            await InternalSetPWM();
-        }
-
-        protected async Task InternalSetPWM()
-        {
-            // Write to PWM registers on Raspberry Pi
-            // RGB values are written if the lamp is on, otherwise zeros.
-            PwmService.Instance[_redChannel] = On ? Red : (byte) 0;
-            PwmService.Instance[_redChannel + 1] = On ? Green : (byte) 0;
-            PwmService.Instance[_redChannel + 2] = On ? Blue : (byte) 0;
-
-            await PwmService.Instance.WritePwmData();
-        }
-
         public bool On
         {
             get
             {
+                _on = ExecuteQueryCommand();
                 return _on;
             }
             set
@@ -78,22 +62,66 @@ namespace Termors.Services.HippoPiPwmLedDaemon
                 if (oldStatus != value)
                 {
                     _on = value;
-                    InternalSetPWM().Wait();
+                    if (_on) ExecuteOnCommand(); else ExecuteOffCommand();
                 }
             }
         }
 
-        public byte Red
+        private void ExecuteOffCommand()
         {
-            get; protected set;
+            string dummy;
+            var success = ExecuteCommandAndReturnOutput(_config.OffCommand, out dummy);
+
+            if (success != 0) throw new Exception("Could not switch lamp off");
         }
-        public byte Green
+
+        private void ExecuteOnCommand()
         {
-            get; protected set;
+            string dummy;
+            var success = ExecuteCommandAndReturnOutput(_config.OnCommand, out dummy);
+
+            if (success != 0) throw new Exception("Could not switch lamp on");
         }
-        public byte Blue
+
+        private bool ExecuteQueryCommand()
         {
-            get; protected set;
+            string dummy;
+            var success = ExecuteCommandAndReturnOutput(_config.QueryCommand, out dummy);
+
+            if (success != 0) throw new Exception("Could not query lamp status");
+
+            return dummy.ToCharArray()[0] == '1';
+        }
+
+        private int ExecuteCommandAndReturnOutput(string command, out string stdin)
+        {
+            int retVal = 1; // error
+            stdin = "";
+
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    FileName = ShellName,
+                    Arguments = String.Format("-c '{0}'", command)
+                };
+
+                var proc = Process.Start(psi);
+
+                stdin = proc.StandardOutput.ReadToEnd();
+                proc.WaitForExit();
+                retVal = proc.ExitCode;
+            }
+            catch (Exception e)
+            {
+                retVal = 2;
+                Console.WriteLine("Error {0} ({1}) executing command {2}", e.GetType().Name, e.Message, command);
+            }
+
+            return retVal;
         }
 
         public string Name

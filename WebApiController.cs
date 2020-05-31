@@ -7,7 +7,7 @@ using System.Web.Http;
 using System.Text;
 
 
-namespace Termors.Services.HippoPiPwmLedDaemon
+namespace Termors.Services.HippoCmdLightDaemon
 {
 
     public class WebApiController : ApiController
@@ -20,10 +20,7 @@ namespace Termors.Services.HippoPiPwmLedDaemon
             LightService svc = CurrentService;
             LampDataObject obj = new LampDataObject
             {
-                burn = svc.On,
-                red = svc.Red,
-                blue = svc.Blue,
-                green = svc.Green
+                burn = svc.On
             };
 
             return obj;
@@ -39,12 +36,9 @@ namespace Termors.Services.HippoPiPwmLedDaemon
         [Route("rgb.json"), HttpPost]
         public void SetStatus(LampDataObject obj)
         {
-            // TODO: partial response, not on/off and r,g,b always set simultaneously
-
             LightService svc = CurrentService;
 
             svc.On = obj.burn;
-            svc.SetRGB(obj.red, obj.green, obj.blue).Wait();
         }
 
         [Route("config.json"), HttpGet]
@@ -54,7 +48,7 @@ namespace Termors.Services.HippoPiPwmLedDaemon
             {
                 name = CurrentService.Name,
                 Behavior = LampBehavior.START_OFF,
-                TypeOfLamp = LampType.LampColorRGB
+                TypeOfLamp = LampType.Switch
             };
 
             return cfg;
@@ -74,6 +68,7 @@ namespace Termors.Services.HippoPiPwmLedDaemon
 
             return HtmlStatusResponse();
         }
+
         [Route("off.html"), HttpGet]
         public HttpResponseMessage Off()
         {
@@ -90,9 +85,6 @@ namespace Termors.Services.HippoPiPwmLedDaemon
             if (CurrentService.On) sb.Append("ON"); else sb.Append("OFF");
             sb.Append("<br/>");
 
-            sb.AppendFormat("Red = {0}<br/>", CurrentService.Red);
-            sb.AppendFormat("Green = {0}<br/>", CurrentService.Green);
-            sb.AppendFormat("Blue = {0}<br/>", CurrentService.Blue);
             sb.Append("</body></html>");
 
             response.Content = new StringContent(sb.ToString());

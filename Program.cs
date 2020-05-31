@@ -4,31 +4,26 @@ using System.Threading;
 
 using Newtonsoft.Json;
 
-namespace Termors.Services.HippoPiPwmLedDaemon
+namespace Termors.Services.HippoCmdLightDaemon
 {
     class MainClass
     {
         public static void Main(string[] args)
         {
             var config = ReadConfig();
-            PwmService.BaseCommand = config.BaseCommand;
-            PwmService.BaseArgs = config.BaseArgs;
-            PwmService.Verbose = config.Verbose;
 
-            // Initial PWM setup (all lamps off)
-            PwmService.Invert = true;
-            PwmService.Instance.WritePwmData().Wait();
+            LightService.ShellName = config.Shell;
 
             // Start web services
             SetupServices(config.Lamps);
 
             // Run until Ctrl+C
             var endEvent = new ManualResetEvent(false);
-            Console.WriteLine("HippoPiPwmLedDaemon started");
+            Console.WriteLine("HippoCmdLightDaemon started");
 
             Console.CancelKeyPress += (sender, e) =>
             {
-                Console.WriteLine("HippoPiPwmLedDaemon stopped");
+                Console.WriteLine("HippoCmdLightDaemon stopped");
 
                 LightService.DisposeAll();                  // Stop all web servers
 
@@ -40,7 +35,7 @@ namespace Termors.Services.HippoPiPwmLedDaemon
 
         public static Configuration ReadConfig()
         {
-            using (StreamReader rea = new StreamReader("pipwmled.json"))
+            using (StreamReader rea = new StreamReader("cmdlight.json"))
             {
                 string json = rea.ReadToEnd();
                 return JsonConvert.DeserializeObject<Configuration>(json);
@@ -51,7 +46,7 @@ namespace Termors.Services.HippoPiPwmLedDaemon
         {
             foreach (var o in objects)
             {
-                var svc = new LightService(o.Name, o.Port, o.RedChannel);
+                var svc = new LightService(o);
                 svc.StartWebserver();
                 svc.RegisterMDNS();
             }

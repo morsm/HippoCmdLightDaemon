@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace Termors.Services.HippoPiPwmLedDaemon.Extensions
+namespace Termors.Services.HippoCmdLightDaemon.Extensions
 {
     public static class ProcessExtensions
     {

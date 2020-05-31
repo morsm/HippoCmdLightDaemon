@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Termors.Services.HippoPiPwmLedDaemon
+namespace Termors.Services.HippoCmdLightDaemon
 {
     public class LampDataObject
     {

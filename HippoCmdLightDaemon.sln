@@ -1,7 +1,7 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HippoPiPwmLedDaemon", "HippoPiPwmLedDaemon.csproj", "{6EB16A1B-309B-480E-89D1-13C64E4D6576}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HippoCmdLightDaemon", "HippoCmdLightDaemon.csproj", "{6EB16A1B-309B-480E-89D1-13C64E4D6576}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
