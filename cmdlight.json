@@ -6,14 +6,14 @@
       "Port": 9040,
       "OnCommand": "curl http://lightberry:9003/webapi/setrelay/2/1",
       "OffCommand": "curl http://lightberry:9003/webapi/setrelay/2/0",
-      "QueryCommand": "curl -s http://lightberry:9003/webapi/relaystatus | sed \"s/\\[\\([0-1]\\),\\([0-1]\\),\\([0-1]\\),\\([0-1]\\)\\]/\\3/\""
+      "QueryCommand": "./querylamp lightberry 3"
     },
     {
       "Name": "CeilingSingle",
       "Port": 9041,
       "OnCommand": "curl http://lightberry:9003/webapi/setrelay/3/1",
       "OffCommand": "curl http://lightberry:9003/webapi/setrelay/3/0",
-      "QueryCommand": "curl -s http://lightberry:9003/webapi/relaystatus | sed \"s/\\[\\([0-1]\\),\\([0-1]\\),\\([0-1]\\),\\([0-1]\\)\\]/\\4/\""
+      "QueryCommand": "./querylamp lightberry 4"
     }
   ]
 }
